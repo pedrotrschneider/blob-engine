@@ -42,18 +42,6 @@ impl Material2d for CustomMaterial {
     }
 }
 
-fn main() {
-    compile_shaders();
-    App::new()
-        .add_plugins((
-            DefaultPlugins,
-            Material2dPlugin::<CustomMaterial>::default(),
-        ))
-        .add_systems(Startup, setup)
-        .add_systems(Update, update)
-        .run();
-}
-
 fn compile_shaders() {
     match SlangCompile::new()
         .with_source("assets/shaders/post_processing.slang")
@@ -76,6 +64,44 @@ fn compile_shaders() {
         Ok(_) => (),
         Err(_) => eprintln!("Failed to compile slang vertex shader"),
     }
+}
+
+fn compile_shaders_glsl() {
+    match SlangCompile::new()
+        .with_source("assets/shaders/post_processing.slang")
+        .with_stage(ShaderStage::Fragment)
+        .to_destinatino("assets/shaders/.compiled/slang_post_processing.frag")
+        .to_target(ShaderTarget::Glsl)
+        .compile()
+    {
+        Ok(_) => (),
+        Err(_) => eprintln!("Failed to compile slang fragment shader"),
+    }
+
+    match SlangCompile::new()
+        .with_source("assets/shaders/post_processing.slang")
+        .with_stage(ShaderStage::Vertex)
+        .to_destinatino("assets/shaders/.compiled/slang_post_processing.vert")
+        .to_target(ShaderTarget::Glsl)
+        .compile()
+    {
+        Ok(_) => (),
+        Err(_) => eprintln!("Failed to compile slang vertex shader"),
+    }
+}
+
+fn main() {
+    compile_shaders();
+    compile_shaders_glsl();
+
+    App::new()
+        .add_plugins((
+            DefaultPlugins,
+            Material2dPlugin::<CustomMaterial>::default(),
+        ))
+        .add_systems(Startup, setup)
+        .add_systems(Update, update)
+        .run();
 }
 
 fn setup(
@@ -107,11 +133,11 @@ fn update(
         if let Some(material) = materials.get_mut(material_handle) {
             let simulation_params = &mut material.simulation;
             simulation_params.time = time.elapsed_seconds();
-            
+
             let window_params = &mut material.window;
             window_params.size = vec2(window.width(), window.height());
             window_params.aspect = window.width() / window.height();
-            
+
             match window.cursor_position() {
                 Some(mouse_position) => {
                     window_params.mouse_position = (mouse_position
