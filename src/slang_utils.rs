@@ -1,3 +1,5 @@
+use crate::constants::*;
+
 use std::process::Command;
 
 #[derive(Clone, Copy)]
@@ -124,5 +126,53 @@ impl SlangCompile {
         println!("Compiling shader {} to {}", source_path_cache, dest_path_cache);
 
         return Ok(());
+    }
+}
+
+pub fn compile_shaders(path: &str) {
+    let file_name = path.split("/").last().unwrap().split(".").collect::<Vec<&str>>()[0];
+
+    match SlangCompile::new()
+        .with_source(path)
+        .with_stage(ShaderStage::Fragment)
+        .to_destinatino(&format!("{ASSETS}/{COMPILED_SHADERS}/{file_name}.frag.spv"))
+        .to_target(ShaderTarget::SpirV)
+        .compile()
+    {
+        Ok(_) => (),
+        Err(_) => eprintln!("Failed to compile slang fragment shader at {path} to SPIRV"),
+    }
+
+    match SlangCompile::new()
+        .with_source(path)
+        .with_stage(ShaderStage::Vertex)
+        .to_destinatino(&format!("{ASSETS}/{COMPILED_SHADERS}/{file_name}.vert.spv",))
+        .to_target(ShaderTarget::SpirV)
+        .compile()
+    {
+        Ok(_) => (),
+        Err(_) => eprintln!("Failed to compile slang vertex shader at {path} to SPIRV"),
+    }
+
+    match SlangCompile::new()
+        .with_source(path)
+        .with_stage(ShaderStage::Fragment)
+        .to_destinatino(&format!("{ASSETS}/{COMPILED_SHADERS}/{file_name}.frag",))
+        .to_target(ShaderTarget::Glsl)
+        .compile()
+    {
+        Ok(_) => (),
+        Err(_) => eprintln!("Failed to compile slang fragment shader at {path} to GLSL"),
+    }
+
+    match SlangCompile::new()
+        .with_source(path)
+        .with_stage(ShaderStage::Vertex)
+        .to_destinatino(&format!("{ASSETS}/{COMPILED_SHADERS}/{file_name}.vert"))
+        .to_target(ShaderTarget::Glsl)
+        .compile()
+    {
+        Ok(_) => (),
+        Err(_) => eprintln!("Failed to compile slang vertex shader at {path} to GLSL"),
     }
 }
