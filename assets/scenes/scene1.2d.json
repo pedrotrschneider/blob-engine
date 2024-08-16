@@ -1,0 +1,29 @@
+{
+    "name": "Scene 1",
+    "shapes": [
+        {
+            "shape_id": 0,
+            "data": [250],
+            "transform": {
+                "position": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "scale": 1
+            },
+            "material": {
+                "color": { "r": 1, "g": 1, "b": 0, "a": 1 }
+            }
+        },
+        {
+            "shape_id": 0,
+            "data": [200],
+            "transform": {
+                "position": { "x": 200, "y": 0 },
+                "rotation": 0,
+                "scale": 1
+            },
+            "material": {
+                "color": { "r": 0, "g": 0, "b": 1, "a": 0.5 }
+            }
+        }
+    ]
+}

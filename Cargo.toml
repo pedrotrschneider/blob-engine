@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.13.2", features = ["dynamic_linking", "file_watcher", "shader_format_spirv", "shader_format_glsl"] }
+serde = "1.0.208"
+serde_json = "1.0.125"
 
 [profile.dev]
 opt-level = 1
