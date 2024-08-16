@@ -116,18 +116,12 @@ impl SlangCompile {
         slangc_command.arg("-I").arg("assets/shaders/sdf2d");
         slangc_command.arg("-I").arg("assets/shaders/math_utils");
 
-        slangc_command
-            .arg("-fvk-use-entrypoint-name")
-            .status()
-            .expect(&format!(
-                "Failed to compile shader {} to {}",
-                source_path_cache, dest_path_cache
-            ));
-
-        println!(
-            "Compiling shader {} to {}",
+        slangc_command.arg("-fvk-use-entrypoint-name").status().expect(&format!(
+            "Failed to compile shader {} to {}",
             source_path_cache, dest_path_cache
-        );
+        ));
+
+        println!("Compiling shader {} to {}", source_path_cache, dest_path_cache);
 
         return Ok(());
     }

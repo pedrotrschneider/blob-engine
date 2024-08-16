@@ -33,10 +33,6 @@ VertexOutput vertex(uint vertex_index : SV_VertexID) {
 float4 fragment(VertexOutput input) : SV_Target0 {
     float2 uv = (input.uv - 0.5) * window.size;
     uv.y = 1 - uv.y;
-
-    SDFScene2D scene = SDFScene2D(1.0);
     
 // {!!}
-
-    return pow(float4(scene.render(), 1.0), 2.2);
 }
