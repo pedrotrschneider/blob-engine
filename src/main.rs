@@ -10,6 +10,7 @@ use bevy::{
     sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle, Mesh2dHandle},
 };
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use slang_utils::{ShaderStage, ShaderTarget, SlangCompile};
 
 const SCENE_PATH: &str = "assets/scenes/scene1.2d.json";
@@ -21,20 +22,20 @@ const BASE_2D_SHADER_PATH: &str = "assets/shaders/base_2d.slang";
 const COMPILED_VERTEX_PATH_WIN: &str = "shaders/.compiled/scene_1.vert.spv";
 const COMPILED_FRAGMENT_PATH_WIN: &str = "shaders/.compiled/scene_1.frag.spv";
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct ParsedVec2 {
     x: f32,
     y: f32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct ParsedVec3 {
     x: f32,
     y: f32,
     z: f32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct ParsedVec4 {
     x: f32,
     y: f32,
@@ -42,7 +43,7 @@ struct ParsedVec4 {
     w: f32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct ParsedColor {
     r: f32,
     g: f32,
@@ -50,29 +51,31 @@ struct ParsedColor {
     a: f32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct ParsedTransform2D {
     position: ParsedVec2,
     rotation: f32,
     scale: f32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct ParsedMaterial2D {
     color: ParsedColor,
     onion: Option<f32>,
     rounding: Option<f32>,
 }
 
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(i32)]
 enum ParsedShape2DType {
     Circle,
     Rect,
     Segment,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct ParsedShape2D {
-    shape_id: i32,
+    shape_id: ParsedShape2DType,
     data: Vec<f32>,
     transform: ParsedTransform2D,
     material: ParsedMaterial2D,
@@ -97,29 +100,34 @@ impl ParsedScene2D {
 
         let mut scene_str = "".to_owned();
         for (i, shape) in self.shapes.iter().enumerate() {
-            scene_str += &format!("    SDFCircle shape{} = SDFCircle({});\n", i, shape.data[0]);
+            match shape.shape_id {
+                ParsedShape2DType::Circle => {
+                    scene_str += &format!("    SDFCircle shape{} = SDFCircle({});\n", i, shape.data[0]);
 
-            scene_str += &format!("    shape{}.transform.position.x = {};\n", i, shape.transform.position.x);
-            scene_str += &format!("    shape{}.transform.position.y = {};\n", i, shape.transform.position.y);
-            scene_str += &format!("    shape{}.transform.rotation = {};\n", i, shape.transform.rotation);
-            scene_str += &format!("    shape{}.transform.scale = {};\n", i, shape.transform.scale);
+                    scene_str += &format!("    shape{}.transform.position.x = {};\n", i, shape.transform.position.x);
+                    scene_str += &format!("    shape{}.transform.position.y = {};\n", i, shape.transform.position.y);
+                    scene_str += &format!("    shape{}.transform.rotation = {};\n", i, shape.transform.rotation);
+                    scene_str += &format!("    shape{}.transform.scale = {};\n", i, shape.transform.scale);
 
-            scene_str += &format!("    shape{}.material.color.r = {};\n", i, shape.material.color.r);
-            scene_str += &format!("    shape{}.material.color.g = {};\n", i, shape.material.color.g);
-            scene_str += &format!("    shape{}.material.color.b = {};\n", i, shape.material.color.b);
-            scene_str += &format!("    shape{}.material.color.a = {};\n", i, shape.material.color.a);
+                    scene_str += &format!("    shape{}.material.color.r = {};\n", i, shape.material.color.r);
+                    scene_str += &format!("    shape{}.material.color.g = {};\n", i, shape.material.color.g);
+                    scene_str += &format!("    shape{}.material.color.b = {};\n", i, shape.material.color.b);
+                    scene_str += &format!("    shape{}.material.color.a = {};\n", i, shape.material.color.a);
 
-            if let Some(onion) = shape.material.onion {
-                scene_str += &format!("    scene.add(shape{}.sdf(uv).onion({}));", i, onion);
-                continue;
+                    if let Some(onion) = shape.material.onion {
+                        scene_str += &format!("    scene.add(shape{}.sdf(uv).onion({}));", i, onion);
+                        continue;
+                    }
+
+                    if let Some(rounding) = shape.material.rounding {
+                        scene_str += &format!("    scene.add(shape{}.sdf(uv).rounded({}));", i, rounding);
+                        continue;
+                    }
+
+                    scene_str += &format!("    scene.add(shape{}.sdf(uv));", i);
+                }
+                _ => {}
             }
-
-            if let Some(rounding) = shape.material.rounding {
-                scene_str += &format!("    scene.add(shape{}.sdf(uv).rounded({}));", i, rounding);
-                continue;
-            }
-
-            scene_str += &format!("    scene.add(shape{}.sdf(uv));", i);
         }
 
         let shader_path = format!(
