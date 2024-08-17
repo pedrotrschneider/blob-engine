@@ -3,6 +3,8 @@ use std::fs;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
+use crate::constants::*;
+
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ParsedVec2 {
     x: f32,
@@ -110,25 +112,25 @@ pub struct ParsedScene2D {
 }
 
 impl ParsedScene2D {
-    const BASE_2D_SHADER_PATH: &'static str = "assets/shaders/base_2d.slang";
-
-    pub fn generate_shader(&self) {
-        let shader_str = fs::read_to_string(Self::BASE_2D_SHADER_PATH).expect(&format!(
-            "Unable to read base 2d shader in path {}",
-            Self::BASE_2D_SHADER_PATH
-        ));
-
+    pub fn generate_shader(&self) -> String {
         let mut scene_str = format!("    SDFScene2D scene = SDFScene2D({});\n", self.aliasing);
         for (i, shape) in self.shapes.iter().enumerate() {
             scene_str += &shape.generate_shader_string(i);
         }
         scene_str += &format!("    return pow(float4(scene.render(), 1.0), {});", self.gamma);
 
-        let shader_path = format!(
-            "assets/shaders/.generated/{}.slang",
+        let shader_path = self.get_generated_shader_path();
+        fs::write(&shader_path, shaders::BASE2D.replace("// {!!}", &scene_str)).expect("Unable to write shader for scene 1");
+
+        return shader_path;
+    }
+
+    pub fn get_generated_shader_path(&self) -> String {
+        return format!(
+            "{}/{}.slang",
+            paths::ASSETS_GENERATED_SHADERS,
             self.name.to_lowercase().replace(" ", "_")
         );
-        fs::write(shader_path, shader_str.replace("// {!!}", &scene_str)).expect("Unable to write shader for scene 1");
     }
 }
 

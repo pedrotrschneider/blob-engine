@@ -44,28 +44,44 @@ pub struct CustomMaterial {
 
 impl Material2d for CustomMaterial {
     fn vertex_shader() -> ShaderRef {
-        return COMPILED_VERTEX_BEVY_PATH.into();
+        return files::COMPILED_VERTEX_BEVY.into();
     }
 
     fn fragment_shader() -> ShaderRef {
-        return COMPILED_FRAGMENT_BEVY_PATH.into();
+        return files::COMPILED_FRAGMENT_BEVY.into();
     }
 }
 
-pub struct App;
+#[derive(Default, Debug)]
+pub struct App {
+    scene_name: String,
+}
 
 impl App {
     pub fn new() -> Self {
-        return Self {};
+        return Self { ..default() };
+    }
+
+    pub fn with_scene(&mut self, scene_name: &str) -> &Self {
+        self.scene_name = scene_name.to_owned();
+        return self;
     }
 
     pub fn run(&self) {
-        fs::create_dir_all("assets/shaders/.compiled").expect("Unable to create .compiled shaders directory");
-        fs::create_dir_all("assets/shaders/.generated").expect("Unable to create .generated shaders directory");
+        fs::create_dir_all(paths::ASSETS_COMPILED_SHADERS).expect("Unable to create .compiled shaders directory");
+        fs::create_dir_all(paths::ASSETS_GENERATED_SHADERS).expect("Unable to create .generated shaders directory");
 
-        SceneParser::parse_scene2d(SCENE_PATH).generate_shader();
+        fs::create_dir_all(paths::MATH_UTILS_CORE).expect("Unable to create .core math_utils directory");
+        fs::write(files::MATH_UTILS_SHADER_CORE, shaders::MATH_UTILS)
+            .expect("Unable to write math_utils shader library to project");
 
-        slang_utils::compile_shaders(GENERATED_SHADER_PATH);
+        fs::create_dir_all(paths::SDF2D_CORE).expect("Unable to create .core sdf2d directory");
+        fs::write(files::SDF2D_SHADER_CORE, shaders::SDF2D).expect("Unable to write sdf2d shader library to project");
+        fs::write(files::SHAPES2D_SHADER_CORE, shaders::SHAPES2D).expect("Unable to write shapes2d shader library to project");
+
+        let generate_shader_path = SceneParser::parse_scene2d(&self.scene_name).generate_shader();
+
+        slang_utils::compile_shaders(&generate_shader_path, Some("main"));
 
         bevy::app::App::new()
             .add_plugins((DefaultPlugins, Material2dPlugin::<CustomMaterial>::default()))

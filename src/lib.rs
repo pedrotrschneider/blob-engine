@@ -4,9 +4,3 @@ pub mod constants;
 pub mod core;
 #[allow(dead_code)]
 pub mod slang_utils;
-
-use core::App;
-
-fn main() {
-    App::new().run();
-}

@@ -115,10 +115,15 @@ impl SlangCompile {
             return Err(CompileError::MissingShaderStage);
         }
 
-        slangc_command.arg("-I").arg("assets/shaders/sdf2d");
-        slangc_command.arg("-I").arg("assets/shaders/math_utils");
+        slangc_command.arg("-I").arg(paths::MATH_UTILS);
+        slangc_command.arg("-I").arg(paths::SDF2D);
 
-        slangc_command.arg("-fvk-use-entrypoint-name").status().expect(&format!(
+        slangc_command.arg("-I").arg(paths::MATH_UTILS_CORE);
+        slangc_command.arg("-I").arg(paths::SDF2D_CORE);
+
+        slangc_command.arg("-fvk-use-entrypoint-name");
+
+        slangc_command.status().expect(&format!(
             "Failed to compile shader {} to {}",
             source_path_cache, dest_path_cache
         ));
@@ -129,13 +134,13 @@ impl SlangCompile {
     }
 }
 
-pub fn compile_shaders(path: &str) {
-    let file_name = path.split("/").last().unwrap().split(".").collect::<Vec<&str>>()[0];
+pub fn compile_shaders(path: &str, shader_name: Option<&str>) {
+    let file_name = shader_name.unwrap_or(path.split("/").last().unwrap().split(".").collect::<Vec<&str>>()[0]);
 
     match SlangCompile::new()
         .with_source(path)
         .with_stage(ShaderStage::Fragment)
-        .to_destinatino(&format!("{ASSETS}/{COMPILED_SHADERS}/{file_name}.frag.spv"))
+        .to_destinatino(&format!("{}/{}.frag.spv", paths::ASSETS_COMPILED_SHADERS, file_name))
         .to_target(ShaderTarget::SpirV)
         .compile()
     {
@@ -146,7 +151,7 @@ pub fn compile_shaders(path: &str) {
     match SlangCompile::new()
         .with_source(path)
         .with_stage(ShaderStage::Vertex)
-        .to_destinatino(&format!("{ASSETS}/{COMPILED_SHADERS}/{file_name}.vert.spv",))
+        .to_destinatino(&format!("{}/{}.vert.spv", paths::ASSETS_COMPILED_SHADERS, file_name))
         .to_target(ShaderTarget::SpirV)
         .compile()
     {
@@ -157,7 +162,7 @@ pub fn compile_shaders(path: &str) {
     match SlangCompile::new()
         .with_source(path)
         .with_stage(ShaderStage::Fragment)
-        .to_destinatino(&format!("{ASSETS}/{COMPILED_SHADERS}/{file_name}.frag",))
+        .to_destinatino(&format!("{}/{}.frag", paths::ASSETS_COMPILED_SHADERS, file_name))
         .to_target(ShaderTarget::Glsl)
         .compile()
     {
@@ -168,7 +173,7 @@ pub fn compile_shaders(path: &str) {
     match SlangCompile::new()
         .with_source(path)
         .with_stage(ShaderStage::Vertex)
-        .to_destinatino(&format!("{ASSETS}/{COMPILED_SHADERS}/{file_name}.vert"))
+        .to_destinatino(&format!("{}/{}.vert", paths::ASSETS_COMPILED_SHADERS, file_name))
         .to_target(ShaderTarget::Glsl)
         .compile()
     {
